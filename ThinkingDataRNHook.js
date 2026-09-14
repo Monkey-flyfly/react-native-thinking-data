@@ -183,7 +183,10 @@ navigationString = function (currentStateVarName, actionName) {
         params.thinkingdataparams = {TDIgnoreViewScreen : true};
       }
     }
-    if (require('react-native').Platform.OS === 'android') {
+    if (require('react-native').Platform.OS === 'android'
+        || require('react-native').Platform.OS === 'harmony'
+        || require('react-native').Platform.OS === 'openharmony'
+        || require('react-native').Platform.OS === 'ohos') {
         var ReactNative = require('react-native');
         var dataModule = ReactNative.NativeModules.RNThinkingAnalyticsModule;
         dataModule && dataModule.trackViewScreen && dataModule.trackViewScreen(params);
@@ -221,11 +224,12 @@ navigationString3 = function (prevStateVarName,currentStateVarName,actionName) {
     ${script}
     var type = ${actionName}.type;
     var iosOnPageShow = false;
-    if (require('react-native').Platform.OS === 'android') {
+    var tdPlatformOS = require('react-native').Platform.OS;
+    if (tdPlatformOS === 'android' || tdPlatformOS === 'harmony' || tdPlatformOS === 'openharmony' || tdPlatformOS === 'ohos') {
       if(type == 'Navigation/SET_PARAMS' || type == 'Navigation/COMPLETE_TRANSITION') {
         return;
       }
-    } else if (require('react-native').Platform.OS === 'ios') {
+    } else if (tdPlatformOS === 'ios') {
       if(type == 'Navigation/BACK' && (${currentStateVarName} && !${currentStateVarName}.isTransitioning)) {
         iosOnPageShow = true;
       } else if (!(type == 'Navigation/SET_PARAMS' || type == 'Navigation/COMPLETE_TRANSITION')) {
@@ -245,7 +249,10 @@ navigationString3 = function (prevStateVarName,currentStateVarName,actionName) {
         params.thinkingdataparams = {TDIgnoreViewScreen : true};
       }
     }
-    if(require('react-native').Platform.OS === 'android') {
+    if(require('react-native').Platform.OS === 'android'
+      || require('react-native').Platform.OS === 'harmony'
+      || require('react-native').Platform.OS === 'openharmony'
+      || require('react-native').Platform.OS === 'ohos') {
       if(${prevStateVarName}){
         var prevParams = $$$getActivePageName$$$(${prevStateVarName});
         if (params.thinkingdataurl == prevParams.thinkingdataurl){
@@ -536,7 +543,7 @@ var thinkingdataHookReduxMiddleCode = `
           }
         }
         var dataModule = ReactNative?.NativeModules?.RNThinkingAnalyticsModule;
-        dataModule?.trackViewScreen && dataModule.trackViewScreen(saProperties);
+        dataModule?.trackViewScreen && dataModule.trackViewScreen(tdProperties);
       }
       trackViewScreen(navStateSelector(newState));
       /* THINKINGDATA HOOK */
@@ -614,7 +621,7 @@ injectReactNavigation = function (dirPath, type, reset = false) {
       if (index == -1) throw 'index is -1';
       content =
         content.substring(0, index + script.length) +
-        addTryCatch(navigationEventString()) +
+        addTryCatch(navigationString('this.state.nav', null)) +
         '\n' +
         content.substring(index + script.length);
       // 备份 navigation 源文件

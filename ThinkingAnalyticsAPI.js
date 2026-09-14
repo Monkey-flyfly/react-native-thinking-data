@@ -4,7 +4,23 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { RNThinkingAnalyticsModule } = NativeModules;
 
-const TESDKVERSION = '3.2.0';
+function isHarmonyOS() {
+    return Platform.OS === 'harmony' || Platform.OS === 'openharmony' || Platform.OS === 'ohos';
+}
+
+function taSdkOsName() {
+    var sdkos = Platform.OS;
+    if (sdkos === 'ios') {
+        sdkos = 'iOS';
+    } else if (sdkos === 'android') {
+        sdkos = 'Android';
+    } else if (sdkos === 'harmony' || sdkos === 'openharmony' || sdkos === 'ohos') {
+        sdkos = 'HarmonyOS';
+    }
+    return sdkos;
+}
+
+const TESDKVERSION = '3.2.2';
 
 const AutoTrackEventType = {
     APP_START: 'appStart',
@@ -276,12 +292,7 @@ ThinkingAnalyticsAPI.prototype._httpRequest_ = async function (eventData) {
             zoneOffset = this['ThinkingAnalyticsSource']['zoneOffset'];
         }
 
-        var sdkos = Platform.OS;
-        if (sdkos === 'ios') {
-            sdkos = 'iOS';
-        } else if (sdkos === 'android') {
-            sdkos = 'Android';
-        }
+        var sdkos = taSdkOsName();
 
         mydata['properties'] = {
             '#os': sdkos,
@@ -461,7 +472,21 @@ ThinkingAnalyticsAPI.prototype.init = function (config) {
     this['ThinkingAnalyticsSource']['trackStatus'] = 'normal';
 
     this.appId = config['appid'];
-    NativeModules.RNThinkingAnalyticsModule.init(config, TESDKVERSION);
+    if (isHarmonyOS()) {
+        var harmonyConfig = {};
+        for (var key in config) {
+            harmonyConfig[key] = config[key];
+        }
+        if (harmonyConfig['appId'] === undefined || harmonyConfig['appId'] === null) {
+            harmonyConfig['appId'] = config['appid'] !== undefined && config['appid'] !== null ? config['appid'] : config['appId'];
+        }
+        if (harmonyConfig['appid'] === undefined || harmonyConfig['appid'] === null) {
+            harmonyConfig['appid'] = harmonyConfig['appId'];
+        }
+        NativeModules.RNThinkingAnalyticsModule.init(harmonyConfig, TESDKVERSION);
+    } else {
+        NativeModules.RNThinkingAnalyticsModule.init(config, TESDKVERSION);
+    }
 }
 
 ThinkingAnalyticsAPI.prototype.formatPropertiesTimeZone = function (properties) {
@@ -1138,12 +1163,7 @@ ThinkingAnalyticsAPI.prototype.getPresetProperties = async function () {
         if (this['ThinkingAnalyticsSource']['zoneOffset']) {
             zoneOffset = this['ThinkingAnalyticsSource']['zoneOffset'];
         }
-        var sdkos = Platform.OS;
-        if (sdkos === 'ios') {
-            sdkos = 'iOS';
-        } else if (sdkos === 'android') {
-            sdkos = 'Android';
-        }
+        var sdkos = taSdkOsName();
         return {
             '#os': sdkos,
             '#lib_version': TESDKVERSION,
@@ -1206,7 +1226,8 @@ ThinkingAnalyticsAPI.prototype.getAccountId = async function () {
     }
 
     var obj = {
-        appId: this.appId
+        appId: this.appId,
+        appid: this.appId
     };
     return await RNThinkingAnalyticsModule.getAccountId(obj);
 }
@@ -1232,6 +1253,7 @@ ThinkingAnalyticsAPI.prototype.getDeviceId = async function () {
     }
 
     var obj = {
+        appId: this.appId,
         appid: this.appId
     };
     return await RNThinkingAnalyticsModule.getDeviceId(obj);
@@ -1249,7 +1271,15 @@ ThinkingAnalyticsAPI.prototype.setAutoTrackProperties = function (types, propert
         return;
     }
 
+    if (isHarmonyOS() && typeof RNThinkingAnalyticsModule.setAutoTrackProperties !== 'function') {
+        if (teEnableShowLog) {
+            console.log("[THINKING] setAutoTrackProperties not supported on harmony native module");
+        }
+        return;
+    }
+
     var obj = {
+        appId: this.appId,
         appid: this.appId,
         types: types,
         properties: properties

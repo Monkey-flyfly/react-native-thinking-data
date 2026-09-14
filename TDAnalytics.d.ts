@@ -32,7 +32,9 @@ type TDModeType = typeof TDMode.NORMAL | typeof TDMode.DEBUG | typeof TDMode.DEB
 type TDThirdPartyMode = typeof TDThirdPartyType.APPS_FLYER | typeof TDThirdPartyType.ADJUST | typeof TDThirdPartyType.BRANCH | typeof TDThirdPartyType.IRON_SOURCE
     | typeof TDThirdPartyType.TOP_ON | typeof TDThirdPartyType.TRACKING
 
-type TDAutoTrackEventMode = typeof TDAutoTrackEventType.APP_START | typeof TDAutoTrackEventType.APP_END | typeof TDAutoTrackEventType.APP_INSTALL | typeof TDAutoTrackEventType.APP_CRASH
+type TDAutoTrackEventMode = typeof TDAutoTrackEventType.APP_START | typeof TDAutoTrackEventType.APP_END
+    | typeof TDAutoTrackEventType.APP_CLICK | typeof TDAutoTrackEventType.APP_VIEW_SCREEN
+    | typeof TDAutoTrackEventType.APP_INSTALL | typeof TDAutoTrackEventType.APP_CRASH
 type TDTrackStatusMode = typeof TDTrackStatus.NORMAL | typeof TDTrackStatus.STOP | typeof TDTrackStatus.SAVE_ONLY | typeof TDTrackStatus.PAUSE
 
 interface TDConfig {
@@ -161,6 +163,18 @@ declare class TDAnalytics {
      */
     static enableAutoTrack(autoTrackEventType: TDAutoTrackEventMode, properties?: object, appId?: string): void;
     /**
+     * Enable the auto tracking function with properties.
+     * @param {Object} options autoTrack infomations
+     * @property {TDAutoTrackEventType} autoTrackTypes options.autoTrackTypes, required
+     * @property {Object} properties options.properties, required
+     * @property {String} appId options.appId, optional
+     */
+    static enableAutoTrackWithProperties(options: {
+        autoTrackTypes?: number;
+        properties?: object;
+        appId?: string;
+    }): void;
+    /**
      * Sets the user property, replacing the original value with the new value if the property already exists.
      * @param {Object} options user properties,required
      * @param {String} appId app id,optional
@@ -223,7 +237,7 @@ declare class TDAnalytics {
      * @param {String} appId app id,optional
      * @returns Public event properties that have been set
      */
-    static getSuperProperties(appId?: string): Promise<object>;
+    static getSuperProperties(appId?: string): Promise<object | null>;
     /**
      * Set dynamic public properties. Each event uploaded after that will contain a public event attribute.
      * @param {Object} dynamicProperties dynamic public properties,required
@@ -235,7 +249,7 @@ declare class TDAnalytics {
      * @param {String} appId app id,optional
      * @returns preset properties
      */
-    static getPresetProperties(appId?: string): Promise<object>;
+    static getPresetProperties(appId?: string): Promise<object | null>;
     /**
      *  Set the account ID. Each setting overrides the previous value. Login events will not be uploaded.
      * @param {String} loginId account id,required
@@ -258,15 +272,15 @@ declare class TDAnalytics {
      * @param {String} appId app id,optional
      * @returns distinct id
      */
-    static getDistinctId(appId?: string): Promise<string>;
+    static getDistinctId(appId?: string): Promise<string | null>;
 
-    static getAccountId(appId?: string): Promise<string>;
+    static getAccountId(appId?: string): Promise<string | null>;
     /**
      * Obtain the device ID.
      * @param {String} appId app id,optional
      * @returns device id,optional
      */
-    static getDeviceId(appId?: string): Promise<string>;
+    static getDeviceId(appId?: string): Promise<string | null>;
     /**
      * Empty the cache queue. When this function is called, the data in the current cache queue will attempt to be reported.
      * If the report succeeds, local cache data will be deleted.

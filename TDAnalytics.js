@@ -1,5 +1,11 @@
 
+import { Platform } from 'react-native';
+
 import thinkingdata, { AutoTrackEventType, TAThirdPartyShareType, TATrackStatus } from "./ThinkingAnalyticsAPI";
+
+function isHarmonyOS() {
+    return Platform.OS === 'harmony' || Platform.OS === 'openharmony' || Platform.OS === 'ohos';
+}
 
 const TDMode = {
     NORMAL: 'normal',
@@ -67,25 +73,6 @@ class TDAnalytics {
     }
 
     /**
-     * Initialize the SDK. The track function is not available until this interface is invoked.
-     * @param {String} appId app id,required
-     * @param {String} serverUrl server url,required
-     */
-    static init(appId, serverUrl) {
-        var config = {
-            appId: appId,
-            serverUrl: serverUrl
-        }
-        if (Object.keys(this.instances).length == 0) {
-            thinkingdata.init(config);
-            this.instances[appId] = thinkingdata;
-        } else {
-            var instance = thinkingdata.initInstance(config);
-            this.instances[appId] = instance;
-        }
-    }
-
-    /**
      * Initialize the SDK with config. The track function is not available until this interface is invoked.
      * @param {Object} config init config
      * 
@@ -97,8 +84,17 @@ class TDAnalytics {
      * @property {String} timeZone config.timeZone default time zone,optional
      */
     static init(config = {}) {
+        if (typeof config === 'string') {
+            config = {
+                appId: arguments.length > 0 ? arguments[0] : undefined,
+                serverUrl: arguments.length > 1 ? arguments[1] : undefined
+            };
+        }
         if (config['appid']) {
             config['appId'] = config['appid'];
+        }
+        if (!config['appid'] && config['appId']) {
+            config['appid'] = config['appId'];
         }
         if (Object.keys(this.instances).length == 0) {
             thinkingdata.init(config);
@@ -238,6 +234,8 @@ class TDAnalytics {
         if (appId) {
             this.instances[appId].setAutoTrackProperties(autoTracks, properties);
             this.instances[appId].enableAutoTrack(autoTracks);
+        } else if (isHarmonyOS() && typeof thinkingdata.setAutoTrackProperties !== 'function') {
+            thinkingdata.enableAutoTrack(autoTracks, properties);
         } else {
             thinkingdata.setAutoTrackProperties(autoTracks, properties);
             thinkingdata.enableAutoTrack(autoTracks);
